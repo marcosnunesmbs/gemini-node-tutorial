@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chat com Gemini</title>
+    <style>
+        #controls {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Pergunte ao Gemini</h1>
+    <input type="text" id="userMessage" placeholder="Digite sua mensagem...">
+    <div id="controls">
+        <label for="temperature">Temperatura:</label>
+        <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.5">
+        <span id="temperatureValue">0.5</span>
+    </div>
+    <button onclick="sendMessage()">Enviar</button>
+    <div id="response"></div>
+
+    <script>
+        const temperatureSlider = document.getElementById('temperature');
+        const temperatureValueSpan = document.getElementById('temperatureValue');
+
+        temperatureSlider.addEventListener('input', () => {
+            temperatureValueSpan.innerText = temperatureSlider.value;
+        });
+
+        async function sendMessage() {
+            const message = document.getElementById('userMessage').value;
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerText = 'Carregando...';
+
+            const response = await fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message, temperature }),
+            });
+
+            const data = await response.json();
+            if (typeof data.reply === 'object') {
+                let keywords = data.reply.palavras_chave;
+                let keywordsString = keywords.join ? keywords.join(', ') : keywords.toString();
+
+                responseDiv.innerHTML = `
+                    <p><strong>Responsta:</strong> ${data.reply.resposta}</p>
+                    <p><strong>Resumo:</strong> ${data.reply.resumo}</p>
+                    <p><strong>Palavras-chave:</strong> ${data.reply.palavras_chave}</p>
+                `;
+            } else {
+                responseDiv.innerText = data.reply;
+            }
+        }
+    </script>
+</body>
+
+</html>
